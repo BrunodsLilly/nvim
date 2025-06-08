@@ -15,26 +15,35 @@ return {
       }
     },
     config = function ()
-      -- lua
-      vim.lsp.config('lua_ls', {
-        init_options = {
-          settings = {}
-        }
-      })
-      vim.lsp.enable('lua_ls')
+      local servers = { 'lua_ls', 'pyright', 'gopls', 'rust_analyzer',
+        'sourcekit' }
+      local custom = {
+        lua_ls = {
+          settings = { Lua = { diagnostics = { globals = { 'vim' } } } }
+        },
+        sourcekit = {                         -- Swift
+          cmd          = { 'sourcekit-lsp' }, -- or full path to Xcode’s binary
+          filetypes    = { 'swift', 'objective-c', 'objective-cpp' },
+          capabilities = {
+            workspace = { didChangeWatchedFiles = { dynamicRegistration = true } },
+          },
+        },
+      }
 
-      -- python
-      vim.lsp.enable('pyright')
 
-      -- go
-      vim.lsp.enable('gopls')
+      for _, name in ipairs(servers) do
+        if custom[name] then
+          vim.lsp.config(name, custom[name])
+        end
+        local ok, msg = pcall(vim.lsp.enable, name)
+        if ok then
+          print('Loaded ' .. name)
+        else
+          print('Failed to load ' .. name .. ' MSG: ' .. msg)
+        end
+      end
 
-      -- rust
-      vim.lsp.enable('rust_analyzer')
-
-      -- swift
-      vim.lsp.enable('SourceKit-LSP')
-
+      -- auto fmt before save
       vim.api.nvim_create_autocmd('LspAttach', {
         callback = function (args)
           local client = vim.lsp.get_client_by_id(args.data.client_id)
