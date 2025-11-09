@@ -1,6 +1,7 @@
 return {
   {
     'neovim/nvim-lspconfig',
+    event = { 'BufReadPre', 'BufNewFile' },
     dependencies = {
       'williamboman/mason.nvim',
       'williamboman/mason-lspconfig.nvim',
@@ -9,21 +10,34 @@ return {
         ft = 'lua', -- only load on lua files
         opts = {
           library = {
-            -- See the configuration section for more details
             -- Load luvit types when the `vim.uv` word is found
             { path = '${3rd}/luv/library', words = { 'vim%.uv' } },
           },
         },
       }
     },
-    config = function ()
-      local servers = { 'lua_ls', 'ruff', 'basedpyright', 'gopls', 'rust_analyzer',
-        'sourcekit', 'ts_ls', 'elixirls', 'gleam', 'clangd', 'jdtls' }
-      local custom = {
+    config = function()
+      local lspconfig = require('lspconfig')
+      local mason_lspconfig_ok, mason_lspconfig = pcall(require, 'mason-lspconfig')
+      if not mason_lspconfig_ok then
+        vim.notify('mason-lspconfig not loaded', vim.log.levels.ERROR)
+        return
+      end
+
+      -- Define server-specific configurations
+      local server_configs = {
         lua_ls = {
-          settings = { Lua = { diagnostics = { globals = { 'vim' } } } }
+          settings = {
+            Lua = {
+              diagnostics = {
+                globals = { 'vim' }
+              }
+            }
+          }
         },
+
         ruff = {
+          -- Ruff handles linting and import organization
           init_options = {
             settings = {
               -- Enable import sorting (organizeImports)
@@ -33,7 +47,9 @@ return {
             }
           }
         },
+
         basedpyright = {
+          -- basedpyright handles type checking only
           settings = {
             basedpyright = {
               -- Disable import organizing (Ruff handles it)
@@ -58,50 +74,66 @@ return {
             }
           }
         },
-        sourcekit = {                         -- Swift (not managed by Mason)
-          cmd          = { 'sourcekit-lsp' }, -- or full path to Xcode's binary
-          filetypes    = { 'swift', 'objective-c', 'objective-cpp' },
-          capabilities = {
-            workspace = { didChangeWatchedFiles = { dynamicRegistration = true } },
-          },
-        },
-        elixirls = {                          -- Elixir
+
+        elixirls = {
           filetypes = { 'elixir', 'eelixir', 'heex', 'surface' },
           settings = {
             elixirLS = {
               dialyzerEnabled = false,        -- Disable dialyzer by default (can be slow)
               fetchDeps = false,              -- Don't auto-fetch dependencies
             }
-          },
-          cmd = { "/Users/L021136/.local/bin/elixir-ls-v0.29.2/language_server.sh" },
+          }
         },
+
+        -- jdtls = {
+        --   -- DISABLED: jdtls doesn't support Java 24 yet
+        --   -- Uncomment and configure when using Java 21 or earlier
+        -- },
       }
 
+      -- Setup mason-lspconfig
+      mason_lspconfig.setup({
+        automatic_installation = true,
+      })
 
-      for _, name in ipairs(servers) do
-        if custom[name] then
-          vim.lsp.config(name, custom[name])
-        end
-        local ok, msg = pcall(vim.lsp.enable, name)
-        if ok then
-          print('Loaded ' .. name)
-        else
-          print('Failed to load ' .. name .. ' MSG: ' .. msg)
-        end
+      -- Setup each LSP server with custom configuration
+      for server_name, config in pairs(server_configs) do
+        lspconfig[server_name].setup(config)
       end
 
-      -- auto fmt before save
+      -- Setup sourcekit-lsp manually (not available in Mason for macOS)
+      -- sourcekit-lsp comes with Xcode
+      local has_sourcekit = vim.fn.executable('sourcekit-lsp') == 1
+      if has_sourcekit then
+        lspconfig.sourcekit.setup({
+          filetypes = { 'swift', 'objective-c', 'objective-cpp' },
+          capabilities = {
+            workspace = { didChangeWatchedFiles = { dynamicRegistration = true } },
+          },
+        })
+      end
+
+      -- Auto-format on save for all LSP clients that support formatting
       vim.api.nvim_create_autocmd('LspAttach', {
-        callback = function (args)
+        desc = 'LSP: Auto-format on save',
+        group = vim.api.nvim_create_augroup('LSP-format-on-save', { clear = true }),
+        callback = function(args)
           local client = vim.lsp.get_client_by_id(args.data.client_id)
           if not client then return end
 
-          if client:supports_method('textDocument/formatting', 0) then
+          -- Only auto-format if the client supports formatting
+          if client:supports_method('textDocument/formatting') then
             vim.api.nvim_create_autocmd('BufWritePre', {
               buffer = args.buf,
-              callback = function ()
-                vim.lsp.buf.format({ bufnr = args.buf, id = client.id })
+              group = vim.api.nvim_create_augroup('LSP-format', { clear = false }),
+              callback = function()
+                vim.lsp.buf.format({
+                  bufnr = args.buf,
+                  id = client.id,
+                  async = false,
+                })
               end,
+              desc = 'Format buffer before save',
             })
           end
         end,
