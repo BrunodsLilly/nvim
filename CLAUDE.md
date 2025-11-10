@@ -36,11 +36,11 @@ The configuration emphasizes learning from code history, systematic problem-solv
 <leader>Dr          " Dual Documentation guide
 <leader>Dj          " Open Today's Journal
 
-" Test automation (language-aware: pytest for Python, javac for Java)
-<leader>Dtr         " Run test for current file
-<leader>Dtw         " Watch test for current file (live reload, Python only)
-<leader>Dta         " Run all tests in project
-<leader>Dtc         " Run tests with coverage report
+" Test automation (automatically detects filetype)
+<leader>Dtr         " Run test for current file (Python: pytest, Java: javac+run)
+<leader>Dtw         " Watch test for current file (Python: pytest-watch, Java: not impl)
+<leader>Dta         " Run all tests (Python: pytest, Java: compile all .java files)
+<leader>Dtc         " Coverage/timing (Python: pytest --cov, Java: time java)
 
 " Git flow automation
 <leader>Dgn         " Create new feature branch (prompts for name)
@@ -332,6 +332,47 @@ The configuration implements a complete learning and development system:
 <leader>zI          " Mark for spaced repetition
 ```
 
+### Workflow 3b: Java Development Without LSP
+
+Since jdtls is disabled (Java 24 runtime incompatibility), use these workflows:
+
+```vim
+" Quick compile and run workflow
+<leader>Dtr         " Compile and run current Java file
+" Automatically handles:
+" - Changing to file directory
+" - Compiling with javac
+" - Running with java
+" - Escaping paths with spaces
+
+" Compile all Java files in project
+<leader>Dta         " Find and compile all .java files
+" Uses: find . -name '*.java' -type f -print0 | xargs -0 javac
+
+" Performance testing
+<leader>Dtc         " Compile, run, and show execution time
+" Uses 'time' command to measure performance
+
+" Syntax highlighting and navigation
+" - Treesitter provides full syntax highlighting
+" - Basic navigation with %{} works
+" - No go-to-definition (requires LSP)
+
+" Manual testing workflow
+" 1. Write code with Treesitter syntax highlighting
+" 2. Compile with <leader>Dtr to check for errors
+" 3. Fix compilation errors shown in terminal
+" 4. Run with <leader>Dtr to test functionality
+" 5. Iterate until working
+
+" To enable full LSP features:
+" 1. Install Java 21: brew install openjdk@21
+" 2. Uncomment jdtls config in lua/plugins/lsp.lua
+" 3. Uncomment nvim-java in lua/plugins/dap.lua
+" 4. Restart Neovim
+" 5. jdtls will use Java 21 runtime but can compile Java 24 projects
+```
+
 ### Workflow 4: Dual Documentation (DDR + Learning)
 
 ```vim
@@ -432,17 +473,28 @@ The configuration implements a complete learning and development system:
 - **Completion**: blink.cmp with snippet support
 
 ### Java Development
-- **LSP**: DISABLED (jdtls doesn't support Java 24)
-  - To enable: Install Java 21 and uncomment jdtls config in `lua/plugins/lsp.lua`
-- **Syntax Highlighting**: Treesitter (works with Java 24)
-- **Testing** (uses local `javac` compiler):
-  - `<leader>Dtr` - Compile and run current Java file
-  - `<leader>Dta` - Compile all Java files in project
-  - `<leader>Dtc` - Run with execution time (using `time` command)
-  - `<leader>Dtw` - Watch mode (not yet implemented)
-- **File settings**: `after/ftplugin/java.lua` (4-space indents, colorcolumn at 120)
-- **Debugging**: DISABLED (requires jdtls)
-- **Note**: For full Java LSP support, use Java 21 or earlier
+- **LSP**: DISABLED (jdtls doesn't support Java 24 runtime)
+  - To enable: Install Java 21 for jdtls runtime (can still compile Java 24 projects)
+  - Uncomment jdtls config in `lua/plugins/lsp.lua` after installing Java 21
+- **Syntax Highlighting**: Treesitter with Java parser (works perfectly with Java 24)
+- **Compilation & Execution** (uses local `javac` compiler):
+  - Language-aware test commands automatically detect Java files
+  - `<leader>Dtr` - Compile and run current Java file (handles paths with spaces)
+  - `<leader>Dta` - Find and compile all `.java` files in project
+  - `<leader>Dtc` - Compile, run, and show execution time (using `time` command)
+  - `<leader>Dtw` - Watch mode (not yet implemented for Java)
+- **File settings**: `after/ftplugin/java.lua`
+  - 4-space indentation (spaces, not tabs)
+  - 120-character line length (colorcolumn)
+  - Consistent with Java industry standards
+- **Debugging**: DISABLED (nvim-java plugin requires jdtls)
+  - nvim-java plugin is present but explicitly disabled
+  - To enable: Install Java 21, enable jdtls, then enable nvim-java in `lua/plugins/dap.lua`
+- **Documentation**: See `JAVA_DEVELOPMENT_GUIDE.md` for comprehensive setup instructions
+- **Best Practices**: See `JAVA_DEVELOPMENT_BEST_PRACTICES_2025.md` for coding standards
+- **Note**: You can use Java 24 for projects while running jdtls on Java 21
+  - jdtls supports managing projects from Java 1.8 through Java 24
+  - Only the jdtls runtime environment needs Java 21
 
 ### Other Languages Configured
 - **Rust**: rust_analyzer with auto-format
@@ -608,9 +660,10 @@ For complete Mason documentation, see:
 ### Development & Testing
 - **nvim-dap**: Debug Adapter Protocol with breakpoint management
 - **nvim-dap-python**: pytest integration, break-on-failure mode
-- **nvim-java**: Java debugging with JUnit support and hot code replacement
+- **nvim-java**: DISABLED - Java debugging with JUnit (requires jdtls, which needs Java ≤21 runtime)
 - **overseer.nvim**: Task runner for custom build/test scripts
 - **trouble.nvim**: Diagnostic browser and symbol navigator
+- **Language-aware test automation**: Test commands auto-detect Python vs Java and use appropriate tools
 
 ### Knowledge & Notes
 - **vim-telekasten**: Zettelkasten with UUID-based linking and backlinks
@@ -771,13 +824,16 @@ gd                  " Go to definition
 
 ## Recent Major Enhancements
 
-1. **Spaced Repetition System** (NEW): Fibonacci-based review intervals with frontmatter tracking
-2. **Git Archaeology System**: Complete 15-command investigation toolkit
-3. **Dual Documentation**: DDR + Zettel side-by-side creation (`<leader>DD`)
-4. **Extended Development Algorithm**: Full TDD workflow with test automation
-5. **Publishing Pipeline**: One-command knowledge garden deployment (`<leader>pp`)
-6. **Modern Completion**: blink.cmp Rust-based fuzzy matching
-7. **Advanced Todo Management**: Central TODO.md with sprint metrics
+1. **Mason.nvim Integration** (NEW): Automatic LSP server installation and management
+2. **Language-Aware Test Automation** (NEW): Test commands auto-detect Python vs Java
+3. **Java Development Support** (NEW): Treesitter syntax, compile/run commands, comprehensive docs
+4. **Spaced Repetition System**: Fibonacci-based review intervals with frontmatter tracking
+5. **Git Archaeology System**: Complete 15-command investigation toolkit
+6. **Dual Documentation**: DDR + Zettel side-by-side creation (`<leader>DD`)
+7. **Extended Development Algorithm**: Full TDD workflow with test automation
+8. **Publishing Pipeline**: One-command knowledge garden deployment (`<leader>pp`)
+9. **Modern Completion**: blink.cmp Rust-based fuzzy matching
+10. **Advanced Todo Management**: Central TODO.md with sprint metrics
 
 ## Key Documentation Resources
 
@@ -800,6 +856,15 @@ gd                  " Go to definition
 - `GIT_BLAME_GUIDE.md` - Git blame in-depth
 - `TODO_WORKFLOW.md` - Task management system
 - `MASTER_WORKFLOW.md` - Unified system integration
+
+**Language-Specific:**
+- `JAVA_DEVELOPMENT_GUIDE.md` - Complete Java setup, jdtls configuration, debugging
+- `JAVA_DEVELOPMENT_BEST_PRACTICES_2025.md` - Java coding standards and conventions
+
+**LSP & Tooling:**
+- `MASON_INDEX.md` - Navigation guide to all Mason documentation
+- `MASON_QUICK_REFERENCE.md` - Quick Mason commands (2-minute read)
+- `MASON_MIGRATION_GUIDE.md` - Complete Mason setup guide
 
 **Conceptual:**
 - `ZETTELKASTEN_PHILOSOPHY.md` - Why IDEAS not TOPICS
