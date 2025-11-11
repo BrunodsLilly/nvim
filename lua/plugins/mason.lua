@@ -25,6 +25,7 @@ return {
         'elixir-ls',                -- Elixir
         'gleam',                    -- Gleam
         'jdtls',                    -- Java
+        'julials',                  -- Julia
 
         -- Formatters (optional but good to have)
         'prettier',                 -- JavaScript, TypeScript, JSON, CSS, etc.

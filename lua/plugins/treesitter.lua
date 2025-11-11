@@ -6,7 +6,7 @@ local M = {
   },
   config = function ()
     require 'nvim-treesitter.configs'.setup {
-      ensure_installed = { 'c', 'lua', 'vim', 'vimdoc', 'query', 'markdown', 'markdown_inline', 'python', 'rust', 'typescript', 'javascript', 'html', 'css', 'ninja', 'rst' },
+      ensure_installed = { 'c', 'lua', 'vim', 'vimdoc', 'query', 'markdown', 'markdown_inline', 'python', 'rust', 'typescript', 'javascript', 'html', 'css', 'ninja', 'rst', 'julia' },
       auto_install = false,
       sync_install = true,
       ignore_install = {},

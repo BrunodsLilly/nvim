@@ -496,6 +496,65 @@ Since jdtls is disabled (Java 24 runtime incompatibility), use these workflows:
   - jdtls supports managing projects from Java 1.8 through Java 24
   - Only the jdtls runtime environment needs Java 21
 
+### Julia Development
+- **LSP**: LanguageServer.jl via Mason (`julials`)
+  - Full IntelliSense with code completion, go-to-definition, hover docs
+  - JuliaFormatter.jl integration (format on save)
+  - Symbol server caching for fast project loading
+  - **Installation**: `julia --project=~/.julia/environments/nvim-lspconfig -e 'using Pkg; Pkg.add("LanguageServer")'`
+  - **Performance**: 20-30s first response (optimizable to 0.5s with PackageCompiler sysimage)
+- **REPL Integration**: vim-slime + Revise.jl for interactive development
+  - `<C-c><C-c>` - Send code to Julia REPL in tmux
+  - `<leader>jc` - Execute cell (marked with `##`)
+  - `<leader>jr` - Start Julia REPL
+  - `<leader>jrf` - Send entire file to REPL
+  - Works with Revise.jl for auto-reload workflow
+- **Unicode Input**: julia-vim provides LaTeX-to-Unicode completion
+  - `\alpha<Tab>` → `α` (700+ mathematical symbols)
+  - Alternative: cmp-latex-symbols for nvim-cmp integration (commented out by default)
+- **Testing**:
+  - `<leader>Dtr` - Run current Julia file (`julia --project=. file.jl`)
+  - `<leader>Dta` - Run all tests (`Pkg.test()`)
+  - `<leader>Dtc` - Run with coverage tracking (`--code-coverage=user`)
+  - `<leader>Dtw` - Watch mode (not yet implemented for Julia)
+  - `<leader>jt` - Run Pkg.test() via ftplugin
+  - `<leader>ji` - Instantiate project (Pkg.instantiate())
+- **Debugging**: nvim-dap-julia + DebugAdapter.jl (experimental)
+  - `<leader>db` - Toggle breakpoint
+  - `<F5>` - Start/continue debugger
+  - `<F10>/<F11>/<F12>` - Step over/into/out
+  - Requires: `julia -e 'using Pkg; Pkg.add("DebugAdapter")'`
+- **Package Management**:
+  - `<leader>jt` - Run Pkg.test()
+  - `<leader>ji` - Instantiate project
+  - `<leader>ju` - Update packages
+  - `<leader>js` - Show package status
+- **Formatting**:
+  - `<leader>jf` - Format file with JuliaFormatter.jl
+  - Auto-format on save (configured in julia.lua)
+- **File settings**: `after/ftplugin/julia.lua`
+  - 4-space indentation (spaces, not tabs)
+  - 92-character line length (Julia style guide recommendation)
+  - Treesitter folding enabled
+- **Configuration**: Templates available (rename to activate)
+  - `lua/plugins/julia.lua.template` → `julia.lua`
+  - `after/ftplugin/julia.lua.template` → `julia.lua`
+- **Documentation**: Complete setup guides available
+  - `JULIA_INDEX.md` - Navigation hub for all Julia documentation
+  - `JULIA_QUICKSTART.md` - 10-minute setup guide
+  - `JULIA_DEVELOPMENT_BEST_PRACTICES_2025.md` - Comprehensive guide (12,000+ words)
+  - `JULIA_RESEARCH_SUMMARY.md` - Ecosystem analysis and research findings
+- **Keybindings** (via `<leader>j*`):
+  - `<leader>jt` - Run Pkg.test()
+  - `<leader>ji` - Instantiate project
+  - `<leader>jr` - Start Julia REPL
+  - `<leader>jf` - Format file
+  - `<leader>jU` - Show Unicode symbol reference
+  - `<leader>jh` - Show hover documentation
+  - `<leader>jm` - Open REPL for macro expansion
+- **Note**: Project must be instantiated for LSP to recognize dependencies
+  - `julia --project=. -e 'using Pkg; Pkg.instantiate()'`
+
 ### Other Languages Configured
 - **Rust**: rust_analyzer with auto-format
 - **C/C++**: clangd
@@ -535,6 +594,7 @@ The following servers are automatically installed on first Neovim startup:
 | elixir-ls | Elixir | Full language support |
 | gleam | Gleam | Full language support |
 | jdtls | Java | Full language support (requires Java ≤21) |
+| julials | Julia | Full language support (requires LanguageServer.jl) |
 
 **Note**: Swift's `sourcekit-lsp` is auto-detected from Xcode installation.
 
