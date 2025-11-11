@@ -24,22 +24,18 @@ return {
   -- This ensures it follows the same pattern as other language servers
 
   -- Julia syntax highlighting and Unicode tab completion
-  {
-    'JuliaEditorSupport/julia-vim',
-    ft = 'julia',
-    init = function()
-      -- Disable julia-vim's autocmds that conflict with other plugins
-      vim.g.latex_to_unicode_auto = 0 -- Disable auto-completion (use Tab instead)
-      vim.g.latex_to_unicode_tab = 1 -- Enable Tab mapping for Julia files only
-      vim.g.latex_to_unicode_file_types = 'julia' -- Only enable for Julia files
-    end,
-    config = function()
-      -- Optional: Configure julia-vim behavior
-      -- vim.g.latex_to_unicode_suggestions = 1  -- Show suggestions
-      -- vim.g.julia_indent_align_import = 1     -- Align using/import
-      -- vim.g.julia_indent_align_brackets = 1   -- Align function args
-    end,
-  },
+  -- Note: julia-vim is DISABLED due to autocmd conflicts with snacks.nvim and blink.cmp
+  -- Alternative: Use cmp-latex-symbols (commented out below) or manual Unicode input
+  -- {
+  --   'JuliaEditorSupport/julia-vim',
+  --   ft = 'julia',
+  --   init = function()
+  --     -- Disable julia-vim's autocmds that conflict with other plugins
+  --     vim.g.latex_to_unicode_auto = 0 -- Disable auto-completion (use Tab instead)
+  --     vim.g.latex_to_unicode_tab = 1 -- Enable Tab mapping for Julia files only
+  --     vim.g.latex_to_unicode_file_types = 'julia' -- Only enable for Julia files
+  --   end,
+  -- },
 
   -- REPL integration with tmux (or kitty/neovim/wezterm)
   {
