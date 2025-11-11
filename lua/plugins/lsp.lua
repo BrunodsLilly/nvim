@@ -89,6 +89,29 @@ return {
         --   -- DISABLED: jdtls doesn't support Java 24 yet
         --   -- Uncomment and configure when using Java 21 or earlier
         -- },
+
+        julials = {
+          -- Julia LSP configuration
+          settings = {
+            julia = {
+              lint = {
+                missingrefs = 'none',  -- Disable noisy missing reference warnings
+              },
+            },
+          },
+          -- Format on save
+          on_attach = function(client, bufnr)
+            if client.server_capabilities.documentFormattingProvider then
+              vim.api.nvim_create_autocmd('BufWritePre', {
+                buffer = bufnr,
+                callback = function()
+                  vim.lsp.buf.format({ async = false })
+                end,
+                desc = 'Julia: Format on save',
+              })
+            end
+          end,
+        },
       }
 
       -- Setup mason-lspconfig

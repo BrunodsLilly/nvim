@@ -20,46 +20,8 @@ return {
   },
 
   -- LSP configuration (julials already in Mason ensure_installed)
-  {
-    'neovim/nvim-lspconfig',
-    opts = {
-      servers = {
-        julials = {
-          -- Optional: Use custom Julia executable with sysimage
-          -- See JULIA_DEVELOPMENT_BEST_PRACTICES_2025.md#performance-optimization
-          on_new_config = function(new_config, _)
-            local julia = vim.fn.expand('~/.julia/environments/nvim-lspconfig/bin/julia')
-            if require('lspconfig').util.path.is_file(julia) then
-              vim.notify('Using custom Julia executable with sysimage', vim.log.levels.INFO)
-              new_config.cmd[1] = julia
-            end
-          end,
-
-          settings = {
-            julia = {
-              -- Optional: Disable noisy missing reference warnings
-              lint = {
-                missingrefs = 'none',
-              },
-            },
-          },
-
-          -- Format on save
-          on_attach = function(client, bufnr)
-            if client.server_capabilities.documentFormattingProvider then
-              vim.api.nvim_create_autocmd('BufWritePre', {
-                buffer = bufnr,
-                callback = function()
-                  vim.lsp.buf.format({ async = false })
-                end,
-                desc = 'Julia: Format on save',
-              })
-            end
-          end,
-        },
-      },
-    },
-  },
+  -- Actual configuration is in lua/plugins/lsp.lua in the server_configs table
+  -- This ensures it follows the same pattern as other language servers
 
   -- Julia syntax highlighting and Unicode tab completion
   {
