@@ -1,0 +1,171 @@
+-- Julia Development Configuration
+-- Based on JULIA_DEVELOPMENT_BEST_PRACTICES_2025.md
+--
+-- To activate:
+-- 1. Rename this file from julia.lua.template to julia.lua
+-- 2. Install LanguageServer.jl:
+--    julia --project=~/.julia/environments/nvim-lspconfig -e 'using Pkg; Pkg.add("LanguageServer")'
+-- 3. Restart Neovim
+-- 4. See JULIA_QUICKSTART.md for testing instructions
+
+return {
+  -- Treesitter for modern syntax highlighting
+  {
+    'nvim-treesitter/nvim-treesitter',
+    opts = function(_, opts)
+      if type(opts.ensure_installed) == 'table' then
+        vim.list_extend(opts.ensure_installed, { 'julia' })
+      end
+    end,
+  },
+
+  -- LSP configuration (julials already in Mason ensure_installed)
+  {
+    'neovim/nvim-lspconfig',
+    opts = {
+      servers = {
+        julials = {
+          -- Optional: Use custom Julia executable with sysimage
+          -- See JULIA_DEVELOPMENT_BEST_PRACTICES_2025.md#performance-optimization
+          on_new_config = function(new_config, _)
+            local julia = vim.fn.expand('~/.julia/environments/nvim-lspconfig/bin/julia')
+            if require('lspconfig').util.path.is_file(julia) then
+              vim.notify('Using custom Julia executable with sysimage', vim.log.levels.INFO)
+              new_config.cmd[1] = julia
+            end
+          end,
+
+          settings = {
+            julia = {
+              -- Optional: Disable noisy missing reference warnings
+              lint = {
+                missingrefs = 'none',
+              },
+            },
+          },
+
+          -- Format on save
+          on_attach = function(client, bufnr)
+            if client.server_capabilities.documentFormattingProvider then
+              vim.api.nvim_create_autocmd('BufWritePre', {
+                buffer = bufnr,
+                callback = function()
+                  vim.lsp.buf.format({ async = false })
+                end,
+                desc = 'Julia: Format on save',
+              })
+            end
+          end,
+        },
+      },
+    },
+  },
+
+  -- Julia syntax highlighting and Unicode tab completion
+  {
+    'JuliaEditorSupport/julia-vim',
+    ft = 'julia',
+    config = function()
+      -- Enable LaTeX-to-Unicode tab completion (default: enabled)
+      vim.g.latex_to_unicode_auto = 0 -- Manual trigger with Tab (recommended)
+      vim.g.latex_to_unicode_tab = 1 -- Enable Tab mapping
+
+      -- Optional: Configure julia-vim behavior
+      -- vim.g.latex_to_unicode_suggestions = 1  -- Show suggestions
+      -- vim.g.julia_indent_align_import = 1     -- Align using/import
+      -- vim.g.julia_indent_align_brackets = 1   -- Align function args
+    end,
+  },
+
+  -- REPL integration with tmux (or kitty/neovim/wezterm)
+  {
+    'jpalardy/vim-slime',
+    ft = 'julia',
+    config = function()
+      -- Configure for tmux (change if using different terminal)
+      vim.g.slime_target = 'tmux' -- or 'kitty', 'neovim', 'wezterm'
+      vim.g.slime_paste_file = vim.fn.expand('$HOME/.slime_paste')
+
+      -- Tmux-specific settings
+      vim.g.slime_default_config = {
+        socket_name = 'default',
+        target_pane = '{last}', -- Send to last active pane
+      }
+
+      -- Keybindings (vim-slime defaults to <C-c><C-c>)
+      -- <C-c><C-c> - Send paragraph to REPL
+      -- Visual select + <C-c><C-c> - Send selection to REPL
+
+      -- Optional: Custom keybinding to send entire file
+      vim.keymap.set('n', '<leader>jrf', 'ggVG<C-c><C-c>', {
+        desc = 'Julia: Send entire file to REPL',
+        buffer = true,
+        remap = true,
+      })
+    end,
+  },
+
+  -- Unicode completion for nvim-cmp users
+  -- Note: Use this OR julia-vim tab completion, not both
+  -- Uncomment if you prefer cmp integration over Tab mapping
+  --[[ {
+    'hrsh7th/nvim-cmp',
+    dependencies = {
+      'kdheepak/cmp-latex-symbols',
+    },
+    opts = function(_, opts)
+      local sources = opts.sources or {}
+      table.insert(sources, {
+        name = 'latex_symbols',
+        priority = 500,
+        option = {
+          strategy = 0, -- 0: mixed (Julia + LaTeX), 1: julia, 2: latex
+        },
+      })
+      opts.sources = sources
+      return opts
+    end,
+  }, ]]
+
+  -- Julia debugging with DAP
+  {
+    'mfussenegger/nvim-dap',
+    optional = true,
+    dependencies = {
+      {
+        'kdheepak/nvim-dap-julia',
+        config = function()
+          require('dap-julia').setup()
+        end,
+      },
+    },
+  },
+
+  -- Julia-specific keymaps
+  {
+    'folke/which-key.nvim',
+    optional = true,
+    opts = {
+      spec = {
+        { '<leader>j', group = 'Julia', icon = '' },
+      },
+    },
+  },
+}
+
+-- Julia-specific keybindings (will be loaded for .jl files only)
+-- Add to after/ftplugin/julia.lua for file-type specific settings
+--
+-- Example keybindings to add:
+--
+-- vim.keymap.set('n', '<leader>jt', ':!julia --project=. -e "using Pkg; Pkg.test()"<CR>',
+--   { desc = 'Julia: Run Pkg.test()', buffer = true })
+--
+-- vim.keymap.set('n', '<leader>ji', ':!julia --project=. -e "using Pkg; Pkg.instantiate()"<CR>',
+--   { desc = 'Julia: Instantiate project', buffer = true })
+--
+-- vim.keymap.set('n', '<leader>jr', ':!julia --project=.<CR>',
+--   { desc = 'Julia: Start REPL', buffer = true })
+--
+-- vim.keymap.set('n', '<leader>jf', function() vim.lsp.buf.format({ async = false }) end,
+--   { desc = 'Julia: Format file', buffer = true })
