@@ -25,6 +25,12 @@ return {
 
   -- Julia syntax highlighting and Unicode tab completion
   -- Note: julia-vim is DISABLED due to autocmd conflicts with snacks.nvim and blink.cmp
+  -- The plugin's BufNew autocmd triggers LaTeXtoUnicode#Refresh on ALL buffers,
+  -- including internal plugin buffers, causing E117 errors.
+  --
+  -- If you previously had julia-vim installed and see LaTeXtoUnicode errors:
+  -- Run: rm -rf ~/.local/share/nvim/lazy/julia-vim
+  --
   -- Alternative: Use cmp-latex-symbols (commented out below) or manual Unicode input
   -- {
   --   'JuliaEditorSupport/julia-vim',
