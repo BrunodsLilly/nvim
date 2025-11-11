@@ -27,11 +27,13 @@ return {
   {
     'JuliaEditorSupport/julia-vim',
     ft = 'julia',
+    init = function()
+      -- Disable julia-vim's autocmds that conflict with other plugins
+      vim.g.latex_to_unicode_auto = 0 -- Disable auto-completion (use Tab instead)
+      vim.g.latex_to_unicode_tab = 1 -- Enable Tab mapping for Julia files only
+      vim.g.latex_to_unicode_file_types = 'julia' -- Only enable for Julia files
+    end,
     config = function()
-      -- Enable LaTeX-to-Unicode tab completion (default: enabled)
-      vim.g.latex_to_unicode_auto = 0 -- Manual trigger with Tab (recommended)
-      vim.g.latex_to_unicode_tab = 1 -- Enable Tab mapping
-
       -- Optional: Configure julia-vim behavior
       -- vim.g.latex_to_unicode_suggestions = 1  -- Show suggestions
       -- vim.g.julia_indent_align_import = 1     -- Align using/import
